@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Linq;
 
 public class GameManager : MonoBehaviour
@@ -9,34 +10,72 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float righBound = 10;
     [SerializeField] private float topBound = 5;
     [SerializeField] private float bottomBound = -5;
-    [SerializeField] private int enemyCount = 10;
-    [SerializeField] private int friendCount = 10;
 
-    public GameObject flyPrefab;
-    public GameObject ladybugPrefab;
-    public int KillCount;
+    public GameObject FlyPrefab;
+    public GameObject LadybugPrefab;
+    public int Score;
+    public bool isGameOver;
+    public float timeRemaining = 60;
 
-    private List<GameObject> targets;   
+    private Camera mainCamera;
 
     void Start()
     {
-        targets = new List<GameObject>();
-        for (int i = 0; i < enemyCount; i++)
-            targets.Add(flyPrefab);
-        for (int i = 0; i < friendCount; i++)
-            targets.Add(ladybugPrefab);
-        targets = targets.OrderBy(_ => Random.value).ToList();
-        KillCount = 0;
-        Spawn(targets[0]);
+        Score = 0;
+        Spawn();
     }
+
+    void Awake()
+    {
+        mainCamera = Camera.main;
+    }
+
 
     void Update()
     {
-        
+        Mouse mouse = Mouse.current;
+        if (mouse.leftButton.wasPressedThisFrame)
+        {
+            Vector3 mousePosition = mouse.position.ReadValue();
+            Ray ray = mainCamera.ScreenPointToRay(mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                if (hit.collider.gameObject.tag == "Enemy")
+                {
+                    Destroy(hit.collider.gameObject);
+                    Score++;
+                    Spawn();
+                }
+                else
+                {
+                    Destroy(hit.collider.gameObject);
+                    isGameOver = true;
+                }   
+            }
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+            foreach (GameObject enemy in enemies)
+            {
+                Destroy(enemy);
+            }
+            GameObject[] friends = GameObject.FindGameObjectsWithTag("Friend");
+            foreach (GameObject friend in friends)
+            {
+                Destroy(friend);
+            }
+            Spawn();
+        }
+        timeRemaining -= Time.deltaTime;
+        if (timeRemaining < 0)
+            isGameOver = true;
     }
 
-    public void Spawn(GameObject target)
+    public void Spawn()
     {
-        Instantiate(target, new Vector3(Random.Range(leftBound, righBound), Random.Range(bottomBound, topBound), 0), target.transform.rotation);
+        int rand = Random.Range(0, 2);
+        if (rand > 0)
+            Instantiate(LadybugPrefab, new Vector3(Random.Range(leftBound, righBound), Random.Range(bottomBound, topBound), 0), LadybugPrefab.transform.rotation);
+        else
+            Instantiate(FlyPrefab, new Vector3(Random.Range(leftBound, righBound), Random.Range(bottomBound, topBound), 0), FlyPrefab.transform.rotation);
     }
+
 }

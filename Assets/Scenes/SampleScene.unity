@@ -593,8 +593,10 @@ MonoBehaviour:
   righBound: 8
   topBound: 4
   bottomBound: -4
-  targets:
-  - {fileID: 4804745756744807712, guid: 9c5d086400bf34841824fa5ac05724f5, type: 3}
+  enemyCount: 10
+  friendCount: 10
+  FlyPrefab: {fileID: 4804745756744807712, guid: 9c5d086400bf34841824fa5ac05724f5, type: 3}
+  LadybugPrefab: {fileID: 4804745756744807712, guid: 8c25d0073052dd641919e0fae5570e73, type: 3}
   KillCount: 0
 --- !u!4 &810447895
 Transform:
