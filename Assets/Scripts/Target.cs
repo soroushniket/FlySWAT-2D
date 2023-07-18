@@ -17,11 +17,4 @@ public class Target : MonoBehaviour
         
     }
 
-    /*private void OnMouseDown()
-    {
-        Destroy(gameObject);
-        gameManager.KillCount++;
-        gameManager.Spawn();
-    }
-    */
 }
