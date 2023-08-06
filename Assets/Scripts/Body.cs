@@ -35,7 +35,8 @@ public class Body : MonoBehaviour
         if (other.gameObject.name == "Game Manager")
         {
             Destroy(parent.gameObject);
-            gameManager.Spawn();
+            if (gameManager.isGameActive)
+                gameManager.Spawn();
         }
     }
 

@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI titleText;
+    public TextMeshProUGUI instructionText;
     public TextMeshProUGUI gameOverText;
     public Button startButton;
     public Button restartButton;
@@ -34,9 +35,12 @@ public class GameManager : MonoBehaviour
     public bool isGameActive;
     public float timeRemaining = DURATION;
 
+    private AudioSource musicPlayer;
+
     void Start()
     {
         mainCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
+        musicPlayer = mainCamera.GetComponent<AudioSource>();
         vertExtent = mainCamera.orthographicSize;
         horzExtent = vertExtent * Screen.width / Screen.height;
         leftBound = -horzExtent*0.9f;
@@ -48,6 +52,7 @@ public class GameManager : MonoBehaviour
 
         gameOverText.gameObject.SetActive(false);
         titleText.gameObject.SetActive(true);
+        instructionText.gameObject.SetActive(true);
         startButton.gameObject.SetActive(true);
         restartButton.gameObject.SetActive(false);
         continueButton.gameObject.SetActive(false);
@@ -74,10 +79,13 @@ public class GameManager : MonoBehaviour
     {
         gameOverText.gameObject.SetActive(false);
         titleText.gameObject.SetActive(false);
+        instructionText.gameObject.SetActive(false);
         startButton.gameObject.SetActive(false);
         restartButton.gameObject.SetActive(false);
         continueButton.gameObject.SetActive(false);
         menuButton.gameObject.SetActive(true);
+        musicPlayer.Play();
+
         score = 0;
         timeRemaining = DURATION;
         Score(0);
@@ -88,27 +96,33 @@ public class GameManager : MonoBehaviour
     public void PauseGame()
     {
         titleText.gameObject.SetActive(true);
+        instructionText.gameObject.SetActive(true);
         restartButton.gameObject.SetActive(true);
         continueButton.gameObject.SetActive(true);
         menuButton.gameObject.SetActive(false);
         isGameActive = false;
+        musicPlayer.Pause();
     }
 
     public void ResumeGame()
     {
         titleText.gameObject.SetActive(false);
+        instructionText.gameObject.SetActive(false);
         restartButton.gameObject.SetActive(false);
         continueButton.gameObject.SetActive(false);
         menuButton.gameObject.SetActive(true);
         isGameActive = true;
+        musicPlayer.Play();
     }
 
     public void GameOver()
     {
         gameOverText.gameObject.SetActive(true);
+        instructionText.gameObject.SetActive(true);
         restartButton.gameObject.SetActive(true);
         menuButton.gameObject.SetActive(false);
         isGameActive = false;
+        musicPlayer.Stop();
     }
 
     public void Spawn()

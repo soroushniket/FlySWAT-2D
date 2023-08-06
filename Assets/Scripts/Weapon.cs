@@ -7,10 +7,12 @@ public class Weapon : MonoBehaviour
 {
     [SerializeField] private float speed;
     [SerializeField] private Vector3 startingPosition;
+
+    private AudioSource hitSound;
     // Start is called before the first frame update
     void Start()
     {
-
+        hitSound = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -21,7 +23,10 @@ public class Weapon : MonoBehaviour
         mousePosition.z = transform.position.z;
         transform.position = mousePosition;
         if (mouse.leftButton.isPressed)
+        {
             Fire();
+            hitSound.Play();
+        } 
         else
             Draw();
     }

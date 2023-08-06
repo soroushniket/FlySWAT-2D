@@ -15,7 +15,8 @@ public class Bug : MonoBehaviour
     public float ReactionTime;
     public Vector3 ThreatPosition;
     public Vector3 LandingPosition;
-    
+
+    private AudioSource flyingSound;
     private GameManager gameManager;
 
     // Start is called before the first frame update
@@ -27,6 +28,8 @@ public class Bug : MonoBehaviour
     private void Awake()
     {
         gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
+        flyingSound = GetComponent<AudioSource>();
+        flyingSound.Play();
         LandingPosition.x = (transform.position.x > 0) ? UnityEngine.Random.Range(0, gameManager.rightBound) : UnityEngine.Random.Range(gameManager.leftBound, 0);
         LandingPosition.y = (transform.position.y > 0) ? UnityEngine.Random.Range(0, gameManager.topBound) : UnityEngine.Random.Range(gameManager.bottomBound, 0);
     }
@@ -35,13 +38,24 @@ public class Bug : MonoBehaviour
     void Update()
     {
         if (!IsDead)
+        {
             if (IsSpooked)
                 if (ReactionTime < 0)
+                {
                     FlySpiral(ThreatPosition, SpiralVelocity, SpiralAwayAlpha);
+                    if (!flyingSound.isPlaying)
+                        flyingSound.Play();
+                }
+
                 else
                     ReactionTime -= Time.deltaTime;
             else if (Vector3.Distance(transform.position, LandingPosition) > SpiralVelocity * Time.deltaTime)
                 FlySpiral(LandingPosition, SpiralVelocity, SpiralTowardsAlpha);
+            else
+                flyingSound.Pause();
+        }   
+        else
+            flyingSound.Stop();
     }
     public void FlySpiral(Vector3 sourcePosition, float spiralVelocity, float spiralAlpha)
     {
