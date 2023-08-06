@@ -11,11 +11,13 @@ public class GameManager : MonoBehaviour
 {
     const int DURATION = 60;
     private int score;
-    
-    [SerializeField] private float leftBnd = -6;
-    [SerializeField] private float rightBnd = 6;
-    [SerializeField] private float topBnd = 5;
-    [SerializeField] private float bottomBnd = -5;
+    Camera mainCamera;
+    public float vertExtent;
+    public float horzExtent;
+    [SerializeField] public float leftBound;
+    [SerializeField] public float rightBound;
+    [SerializeField] public float topBound;
+    [SerializeField] public float bottomBound;
 
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI scoreText;
@@ -28,12 +30,22 @@ public class GameManager : MonoBehaviour
     public GameObject FlyPrefab;
     public GameObject LadybugPrefab;
     public GameObject WeaponPrefab;
+    public Weapon weapon;
     public bool isGameActive;
     public float timeRemaining = DURATION;
 
     void Start()
     {
-        Instantiate(WeaponPrefab);
+        mainCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
+        vertExtent = mainCamera.orthographicSize;
+        horzExtent = vertExtent * Screen.width / Screen.height;
+        leftBound = -horzExtent*0.9f;
+        rightBound = horzExtent*0.9f;
+        topBound = vertExtent*0.8f; // lower To account for the UI components
+        bottomBound = -vertExtent*0.9f;
+
+        weapon = GameObject.Find("Weapon").GetComponent<Weapon>();
+
         gameOverText.gameObject.SetActive(false);
         titleText.gameObject.SetActive(true);
         startButton.gameObject.SetActive(true);
@@ -101,39 +113,24 @@ public class GameManager : MonoBehaviour
 
     public void Spawn()
     {
-        int rand = Random.Range(0, 2);
-        if (rand > 0)
-            Instantiate(LadybugPrefab, new Vector3(Random.Range(leftBnd, rightBnd), Random.Range(bottomBnd, topBnd), 0), LadybugPrefab.transform.rotation);
+        int isFly = Random.Range(0, 2);
+        //Quaternion spawnRotation = Quaternion.AngleAxis(-90, transform.right);
+        Quaternion spawnRotation = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.forward);
+        Vector3 spawnPosition = new Vector3(Random.Range(-horzExtent, horzExtent), Random.Range(-vertExtent, vertExtent), 0);
+        if (Mathf.Abs(weapon.transform.position.x) > Mathf.Abs(weapon.transform.position.y))
+            spawnPosition.x = (weapon.transform.position.x < 0) ? horzExtent : -horzExtent;
         else
-            Instantiate(FlyPrefab, new Vector3(Random.Range(leftBnd, rightBnd), Random.Range(bottomBnd, topBnd), 0), FlyPrefab.transform.rotation);
-    }
-    /*
-    public void Shoo()
-    {
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        foreach (GameObject enemy in enemies)
-        {
-            StartCoroutine(Flee(enemy));
-        }
-        GameObject[] friends = GameObject.FindGameObjectsWithTag("Friend");
-        foreach (GameObject friend in friends)
-        {
-            StartCoroutine(Flee(friend));
-        }
-    }
-    */
-    public bool IsInBnd(Vector3 loc)
-    {
-        if (loc.x > leftBnd   && loc.x < rightBnd &&
-            loc.y > bottomBnd && loc.y < topBnd)
-            return true;
+            spawnPosition.y = (weapon.transform.position.y < 0) ? vertExtent : -vertExtent;
+
+        if (isFly > 0)
+            Instantiate(FlyPrefab, spawnPosition, spawnRotation);
         else
-            return false;
+            Instantiate(LadybugPrefab, spawnPosition, spawnRotation);
     }
 
     public void Score(int points)
     {
-        score+=points;
+        score += points;
         scoreText.text = "Score: " + score;
     }
 }

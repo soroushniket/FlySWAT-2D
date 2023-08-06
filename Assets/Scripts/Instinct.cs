@@ -19,7 +19,13 @@ public class Instinct : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Weapon"))
-            StartCoroutine(parent.FlyOut());
+
+        if (!parent.IsSpooked && 
+            other.gameObject.CompareTag("Weapon"))
+        {
+            parent.IsSpooked = true;
+            parent.ThreatPosition = other.gameObject.transform.position;
+        }
+            
     }
 }
