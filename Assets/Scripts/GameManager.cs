@@ -1,56 +1,57 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using System.Linq;
 using TMPro;
-using UnityEngine.Analytics;
 
 public class GameManager : MonoBehaviour
 {
     const int DURATION = 60;
-    private int score;
-    Camera mainCamera;
-    public float vertExtent;
-    public float horzExtent;
-    [SerializeField] public float leftBound;
-    [SerializeField] public float rightBound;
-    [SerializeField] public float topBound;
-    [SerializeField] public float bottomBound;
 
+    private int score;
+    private int highScore;
+    private Camera mainCamera;
+    private AudioSource audioPlayer;
+    private WeaponManager weaponManager;
+    private float vertExtent;
+    private float horzExtent;
+    //private ParticleSystem confetti;
+
+    public float leftBound;
+    public float rightBound;
+    public float topBound;
+    public float bottomBound;
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI titleText;
     public TextMeshProUGUI instructionText;
     public TextMeshProUGUI gameOverText;
+    public TextMeshProUGUI finalScoreText;
     public Button startButton;
     public Button restartButton;
     public Button continueButton;
     public Button menuButton;
     public GameObject FlyPrefab;
     public GameObject LadybugPrefab;
-    public GameObject WeaponPrefab;
-    public Weapon weapon;
     public bool isGameActive;
     public float timeRemaining = DURATION;
-
-    private AudioSource musicPlayer;
+    public AudioClip applaudSound;
+    public AudioClip booSound;
 
     void Start()
     {
         mainCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
-        musicPlayer = mainCamera.GetComponent<AudioSource>();
+        //confetti = GameObject.Find("Confetti").GetComponent<ParticleSystem>();
+        audioPlayer = mainCamera.GetComponent<AudioSource>();
         vertExtent = mainCamera.orthographicSize;
         horzExtent = vertExtent * Screen.width / Screen.height;
         leftBound = -horzExtent*0.9f;
         rightBound = horzExtent*0.9f;
         topBound = vertExtent*0.8f; // lower To account for the UI components
         bottomBound = -vertExtent*0.9f;
+        weaponManager = GameObject.FindGameObjectWithTag("Weapon").GetComponent<WeaponManager>();
 
-        weapon = GameObject.Find("Weapon").GetComponent<Weapon>();
-
+        //confetti.Stop();
         gameOverText.gameObject.SetActive(false);
+        finalScoreText.gameObject.SetActive(false);
         titleText.gameObject.SetActive(true);
         instructionText.gameObject.SetActive(true);
         startButton.gameObject.SetActive(true);
@@ -59,7 +60,9 @@ public class GameManager : MonoBehaviour
         menuButton.gameObject.SetActive(false);
         scoreText.gameObject.SetActive(true);
         timerText.gameObject.SetActive(true);
+        weaponManager.gameObject.SetActive(false);
         isGameActive = false;
+        highScore = 0;
     }
 
     void Update()
@@ -70,7 +73,7 @@ public class GameManager : MonoBehaviour
             timerText.text = timeRemaining.ToString("F0");
 
             if (timeRemaining < 0)
-                GameOver();
+                GameFinished();
         }
     }
 
@@ -78,13 +81,15 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         gameOverText.gameObject.SetActive(false);
+        finalScoreText.gameObject.SetActive(false);
         titleText.gameObject.SetActive(false);
         instructionText.gameObject.SetActive(false);
         startButton.gameObject.SetActive(false);
         restartButton.gameObject.SetActive(false);
         continueButton.gameObject.SetActive(false);
         menuButton.gameObject.SetActive(true);
-        musicPlayer.Play();
+        weaponManager.gameObject.SetActive(true);
+        audioPlayer.Play();
 
         score = 0;
         timeRemaining = DURATION;
@@ -96,45 +101,78 @@ public class GameManager : MonoBehaviour
     public void PauseGame()
     {
         titleText.gameObject.SetActive(true);
+        finalScoreText.gameObject.SetActive(false);
         instructionText.gameObject.SetActive(true);
         restartButton.gameObject.SetActive(true);
         continueButton.gameObject.SetActive(true);
         menuButton.gameObject.SetActive(false);
         isGameActive = false;
-        musicPlayer.Pause();
+        audioPlayer.Pause();
+        weaponManager.gameObject.SetActive(false);
     }
 
     public void ResumeGame()
     {
         titleText.gameObject.SetActive(false);
+        finalScoreText.gameObject.SetActive(false);
         instructionText.gameObject.SetActive(false);
         restartButton.gameObject.SetActive(false);
         continueButton.gameObject.SetActive(false);
         menuButton.gameObject.SetActive(true);
         isGameActive = true;
-        musicPlayer.Play();
+        audioPlayer.Play();
+        weaponManager.gameObject.SetActive(true);
     }
 
     public void GameOver()
     {
+        DestroyAllBugs();
         gameOverText.gameObject.SetActive(true);
+        finalScoreText.gameObject.SetActive(false);
         instructionText.gameObject.SetActive(true);
         restartButton.gameObject.SetActive(true);
         menuButton.gameObject.SetActive(false);
         isGameActive = false;
-        musicPlayer.Stop();
+        audioPlayer.Stop();
+        audioPlayer.PlayOneShot(booSound);
+        weaponManager.gameObject.SetActive(false);
+    }
+
+    public void GameFinished()
+    {
+        DestroyAllBugs();
+        gameOverText.gameObject.SetActive(false);
+        finalScoreText.text = scoreText.text;
+        finalScoreText.gameObject.SetActive(true);
+        instructionText.gameObject.SetActive(true);
+        restartButton.gameObject.SetActive(true);
+        menuButton.gameObject.SetActive(false);
+        isGameActive = false;
+        audioPlayer.Stop();
+        weaponManager.gameObject.SetActive(false);
+        if (score > highScore)
+        {
+            highScore = score;
+            audioPlayer.PlayOneShot(applaudSound);
+            //confetti.Play();
+            finalScoreText.text = "New High Score: " + highScore;
+        }
+        else
+        {
+            finalScoreText.text = "Score: " + score + "\nHigh Score: " + highScore;
+        }
     }
 
     public void Spawn()
     {
-        int isFly = Random.Range(0, 2);
-        //Quaternion spawnRotation = Quaternion.AngleAxis(-90, transform.right);
+        int isFly = Random.Range(0, 5);
         Quaternion spawnRotation = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.forward);
-        Vector3 spawnPosition = new Vector3(Random.Range(-horzExtent, horzExtent), Random.Range(-vertExtent, vertExtent), 0);
-        if (Mathf.Abs(weapon.transform.position.x) > Mathf.Abs(weapon.transform.position.y))
-            spawnPosition.x = (weapon.transform.position.x < 0) ? horzExtent : -horzExtent;
+        Vector3 spawnPosition = new Vector3(Random.Range(bottomBound, topBound), Random.Range(leftBound, rightBound), 0);
+        Vector3 weaponPosition = weaponManager.transform.position;
+        if (Mathf.Abs(weaponPosition.x) > Mathf.Abs(weaponPosition.y))
+            spawnPosition.x = (weaponPosition.x < 0) ? horzExtent : -horzExtent;
         else
-            spawnPosition.y = (weapon.transform.position.y < 0) ? vertExtent : -vertExtent;
+            spawnPosition.y = (weaponPosition.y < 0) ? vertExtent : -vertExtent;
 
         if (isFly > 0)
             Instantiate(FlyPrefab, spawnPosition, spawnRotation);
@@ -146,5 +184,11 @@ public class GameManager : MonoBehaviour
     {
         score += points;
         scoreText.text = "Score: " + score;
+    }
+
+    public void DestroyAllBugs()
+    {
+        Destroy(GameObject.FindGameObjectWithTag("Friend"));
+        Destroy(GameObject.FindGameObjectWithTag("Enemy"));
     }
 }
